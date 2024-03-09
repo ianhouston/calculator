@@ -4,171 +4,176 @@ const calculatorText = calculatorTextContainer.querySelector('.calculatorText');
 const calculatorResult = calculatorTextContainer.querySelector('.calculatorResult');
 
 const decimalLimit = 3;
-let number1 = "";
-let number2 = "";
-let operator = "";
-let previousResult = "0";
-let decimal = false;
-let operated = false;
+let numbers = [];
+let operators = [];
+let lastResult = "0";
+let justEvaluated = false;
 
 // ADDING METHODS FOR BUTTON EVENTS
 
-const resetCalculatorVariables = () => {
-    number1 = ""; 
-    number2 = "";
-    operator = "";
+const resetTextVariables = () => {
+    numbers = [];
+    operators = [];
 }
 
+//returns the index of the current number
+// and can generate a new index if needed
+// and given permission with addNumberAllowed
+function getCurrentNumberIndex(addNumberAllowed = true) {
+    if (justEvaluated) {
+        resetTextVariables();
+    }
+
+    if (operators.length == numbers.length) {
+        if (addNumberAllowed) {
+            numbers.push("");
+        }
+        return numbers.length - 1;
+    }
+    else {
+        return numbers.length - 1;
+    }
+}
+
+//changes the calculator's text to the current variable values
+// and resets the result to nothing if there is already an operation
+// because this method implies that there is a new button press that
+// will generate new data for a new operation
 const updateText = () => {
-    calculatorText.textContent = `${number1} ${operator} ${number2}`;
-    if (operated) {
+    calculatorText.textContent = "";
+    numbers.forEach((number, numberIndex) => {
+        calculatorText.textContent+= number;
+        if (operators.length - 1 >= numberIndex) {
+            calculatorText.textContent+= ` ${operators[numberIndex]} `;
+        }
+    });
+
+    if (justEvaluated) {
         calculatorResult.textContent = "";
     }
 }
 
-function giveCurrentNumber() {
-    if (operator == "" || operated == true) {
-        if (operated == true) {
-            resetCalculatorVariables();
-        }
-        return 1;
-    }
-    else {
-        return 2;
-    }
-}
-
 const clearEntry = () => {
-    if (giveCurrentNumber() == 1) {
-        number1 = "";
+    if (justEvaluated) {
+        resetTextVariables();
+        return;
+    }
+    let lastNumbersIndex = numbers.length - 1;
+    if (numbers.length == operators.length) {
+        operators.pop();
+    }
+    else if (numbers[lastNumbersIndex] == "") {
+        numbers.pop();
+        operators.pop();
     }
     else {
-        if (number2 != "") {
-            number2 = "";
-        }
-        else {
-            operator = "";
-        }
+        numbers.pop();
     }
 }
 
 const backspaceOnce = () => {
-    if (giveCurrentNumber() == 1) {
-        if (number1 != "") {
-            number1 = number1.substring(0, number1.length - 1);
-        }
+    if (justEvaluated) {
+        resetTextVariables();
+        return;
+    }
+    let lastNumbersIndex = numbers.length - 1;
+    if (numbers.length == operators.length) {
+        operators.pop();
+    }
+    else if (numbers[lastNumbersIndex] == "") {
+        numbers.pop();
+        operators.pop();
     }
     else {
-        if (number2 != "") {
-            number2 = number2.substring(0, number2.length - 1);
-        }
-        else {
-            operator = "";
-        }
+        numbers[lastNumbersIndex] = numbers[lastNumbersIndex].substring(0, numbers[lastNumbersIndex].length - 1);
     }
 }
 
-function addToNum(nextDigit, number) {
-    if (number == 1) {
-        number1+= nextDigit;
-    }
-    else {
-        number2+= nextDigit;
-    }
+function addToNumber(nextDigit) {
+    numberIndex = getCurrentNumberIndex();
+    numbers[numberIndex]+= nextDigit;
 }
 
 const changeNumberSign = () => {
-    if (giveCurrentNumber() == 1) {
-        if (number1 == "") { 
-            number1 = "-";
-        }
-        else if (number1 == "-") {
-            number1 = "";
-        }
-        else {
-            number1*= -1; 
-        }
+    numberIndex = getCurrentNumberIndex();
+    if (numbers[numberIndex] == "") { 
+        numbers[numberIndex] = "-";
     }
-    else { 
-        if (number2 == "") {
-            number2 = "-";
-        }
-        else if (number2 == "-") {
-            number2 = "";
-        }
-        else {
-            number2*= -1; 
-        }
+    else if (numbers[numberIndex] == "-") {
+        numbers[numberIndex] = "";
+    }
+    else {
+        numbers[numberIndex] = `${numbers[numberIndex] * -1}`; 
     }
 }
 
 const addArithmeticOperator = (event) => {
-    if (operated) {
-        resetCalculatorVariables();
-        number1 = previousResult;
+    if (justEvaluated) {
+        resetTextVariables();
+        numbers.push(lastResult);
+        justEvaluated = false;
     }
-    operator = event.currentTarget.textContent 
+
+    if (operators.length < numbers.length) {
+        operators.push(event.currentTarget.textContent);
+    }
+    else {
+        operators[operators.length - 1] = event.currentTarget.textContent 
+    }
+
     updateText();
-    operated = false;
 }
 
-function add(first, second) {
-    return first + second;
-}
-function subtract(first, second) {
-    return first - second;
-}
-function multiply(first, second) {
-    return first * second;
-}
-function divide(first, second) {
-    return first / second;
+function stringNumberToRealNumber(stringNumber) {
+    if (stringNumber.includes(".")) {
+        return parseFloat(stringNumber);
+    }
+    else {
+        return parseInt(stringNumber);
+    }
 }
 
-const operate = () => {
-    operated = true;
-    let realNumber1;
-    let realNumber2;
+function add(number1, number2) {
+    return stringNumberToRealNumber(number1) + stringNumberToRealNumber(number2);
+}
+function subtract(number1, number2) {
+    return stringNumberToRealNumber(number1) - stringNumberToRealNumber(number2);
+}
+function multiply(number1, number2) {
+    return stringNumberToRealNumber(number1) * stringNumberToRealNumber(number2);
+}
+function divide(number1, number2) {
+    return stringNumberToRealNumber(number1) / stringNumberToRealNumber(number2);
+}
+
+//will recursively evaluate values with operators 
+// until it has gone through the entirety of the 
+// numbers and operators arrays
+function evaluate(number1 = numbers[0], operatorIndex = 0, number2Index = 1) {
     let result;
 
-    if (number1.includes(".")) {
-        realNumber1 = parseFloat(number1);
+    switch(operators[operatorIndex]) {
+        case ("+"):
+            result = add(number1, numbers[number2Index]);
+            break;
+        case ("-"):
+            result = subtract(number1, numbers[number2Index]);
+            break;
+        case ("*"):
+            result = multiply(number1, numbers[number2Index]);
+            break;
+        case ("/"):
+            result = divide(number1, numbers[number2Index]);
+            break;
+        default:
+            alert("ERROR: evaluation failed!");
     }
-    else {
-        realNumber1 = parseInt(number1);
-    }
-    if (number2.includes(".")) {
-        realNumber2 = parseFloat(number2);
-    }
-    else {
-        realNumber2 = parseInt(number2);
-    }
-
-    if (operator == "+") {
-        result = add(realNumber1, realNumber2);
-    }
-    else if (operator == "-") {
-        result = subtract(realNumber1, realNumber2);
-    }
-    else if (operator == "*") {
-        result = multiply(realNumber1, realNumber2);
-    }
-    else if (operator == "/") {
-        result = divide(realNumber1, realNumber2);
-    }
-    else {
-        alert("ERROR: evaluation failed!");
-        result = NaN;
+    
+    if (numbers.length - 1> number2Index) {
+        result = evaluate(`${result}`, operatorIndex + 1, number2Index + 1);
     }
 
-    if (result % 1 == 0) {
-        calculatorResult.textContent = "= " + result; 
-    }
-    else {
-        calculatorResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
-    }
-
-    previousResult = `${result}`;
+    return result;
 }
 
 // ADDING BUTTONS TO CALCULATOR CONTAINER
@@ -198,12 +203,13 @@ buttonListMap.forEach((element, name) => {
             element.addEventListener('click', clearEntry);
             break;
         case ("C"):
-            element.addEventListener('click', resetCalculatorVariables);
+            element.addEventListener('click', resetTextVariables);
             break;
         case ("<-"):
             element.addEventListener('click', backspaceOnce);
             break;
-        // Number additions
+        // Digit input
+        case ("0"):
         case ("1"):
         case ("2"):
         case ("3"):
@@ -213,10 +219,9 @@ buttonListMap.forEach((element, name) => {
         case ("7"):
         case ("8"):
         case ("9"):
-        case ("0"):
-            element.addEventListener('click', (event) => { addToNum(event.currentTarget.textContent, giveCurrentNumber()) });
+            element.addEventListener('click', (event) => { addToNumber(event.currentTarget.textContent) });
             break;
-        // Arithmetic operators
+        // Arithmetic input
         case ("+"):
         case ("-"):
         case ("*"):
@@ -225,7 +230,25 @@ buttonListMap.forEach((element, name) => {
             return;
         // Evaluation operation
         case ("="):
-            element.addEventListener('click', operate);
+            element.addEventListener('click', () => {
+                let result;
+                justEvaluated = true;
+                if (numbers.length >= 2) {
+                    result = evaluate();
+                }
+                else {
+                    alert("ERROR: cannot evaluate without at least 2 numbers!");
+                }
+
+                if (result % 1 == 0) {
+                    calculatorResult.textContent = "= " + result; 
+                }
+                else {
+                    calculatorResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
+                }
+
+                lastResult = `${result}`;
+            });
             return;
         // Special number mutators
         case ("+/-"): //strings can be operated on as numbers can except for when the + operator is used, so this case works as intended
@@ -233,14 +256,14 @@ buttonListMap.forEach((element, name) => {
             break;
         case ("."):
             element.addEventListener('click', (event) => { 
-                if (!number1.includes(".")) {
-                    addToNum(event.currentTarget.textContent, giveCurrentNumber()) 
+                if (!numbers[getCurrentNumberIndex()].includes(".")) {
+                    addToNumber(event.currentTarget.textContent) 
                 }
             });
             break;
     }
     element.addEventListener('click', () => {
         updateText();
-        operated = false;
+        justEvaluated = false;
     });
 });
