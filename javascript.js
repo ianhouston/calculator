@@ -9,12 +9,76 @@ let operators = [];
 let lastResult = "0";
 let justEvaluated = false;
 
-// ADDING METHODS FOR BUTTON EVENTS
+///// ADDING METHODS FOR BUTTON EVENTS /////
+
+// TEXT UPDATING/RESETTING //
 
 const resetTextVariables = () => {
     numbers = [];
     operators = [];
 }
+
+//changes the calculator's text to the current variable values
+// and resets the result to nothing if there is already an evaluation
+// because this method implies that there is a new button press that
+// will generate new data for a new evaluation
+const updateText = () => {
+    calculatorText.textContent = "";
+    numbers.forEach((number, numberIndex) => {
+        calculatorText.textContent+= number;
+        if (operators.length - 1 >= numberIndex) {
+            calculatorText.textContent+= ` ${operators[numberIndex]} `;
+        }
+    });
+    
+    if (justEvaluated) {
+        calculatorResult.textContent = "";
+    }
+}
+
+// TEXT BACKTRACKING //
+
+const clearEntry = () => {
+    if (justEvaluated) {
+        resetTextVariables();
+        return;
+    }
+
+    let lastNumbersIndex = numbers.length - 1;
+
+    if (numbers.length == operators.length) {
+        operators.pop();
+    }
+    else if (numbers[lastNumbersIndex] == "") {
+        numbers.pop();
+        operators.pop();
+    }
+    else {
+        numbers.pop();
+    }
+}
+
+const backspaceOnce = () => {
+    if (justEvaluated) {
+        resetTextVariables();
+        return;
+    }
+
+    let lastNumbersIndex = numbers.length - 1;
+
+    if (numbers.length == operators.length) {
+        operators.pop();
+    }
+    else if (numbers[lastNumbersIndex] == "") {
+        numbers.pop();
+        operators.pop();
+    }
+    else {
+        numbers[lastNumbersIndex] = numbers[lastNumbersIndex].substring(0, numbers[lastNumbersIndex].length - 1);
+    }
+}
+
+// CALCULATION MUTATORS //
 
 //returns the index of the current number
 // and can generate a new index if needed
@@ -35,76 +99,11 @@ function getCurrentNumberIndex(addNumberAllowed = true) {
     }
 }
 
-//changes the calculator's text to the current variable values
-// and resets the result to nothing if there is already an operation
-// because this method implies that there is a new button press that
-// will generate new data for a new operation
-const updateText = () => {
-    calculatorText.textContent = "";
-    numbers.forEach((number, numberIndex) => {
-        calculatorText.textContent+= number;
-        if (operators.length - 1 >= numberIndex) {
-            calculatorText.textContent+= ` ${operators[numberIndex]} `;
-        }
-    });
-
-    if (justEvaluated) {
-        calculatorResult.textContent = "";
-    }
-}
-
-const clearEntry = () => {
-    if (justEvaluated) {
-        resetTextVariables();
-        return;
-    }
-    let lastNumbersIndex = numbers.length - 1;
-    if (numbers.length == operators.length) {
-        operators.pop();
-    }
-    else if (numbers[lastNumbersIndex] == "") {
-        numbers.pop();
-        operators.pop();
-    }
-    else {
-        numbers.pop();
-    }
-}
-
-const backspaceOnce = () => {
-    if (justEvaluated) {
-        resetTextVariables();
-        return;
-    }
-    let lastNumbersIndex = numbers.length - 1;
-    if (numbers.length == operators.length) {
-        operators.pop();
-    }
-    else if (numbers[lastNumbersIndex] == "") {
-        numbers.pop();
-        operators.pop();
-    }
-    else {
-        numbers[lastNumbersIndex] = numbers[lastNumbersIndex].substring(0, numbers[lastNumbersIndex].length - 1);
-    }
-}
-
+//adds another digit to the end of
+// the string holding the full number
 function addToNumber(nextDigit) {
     numberIndex = getCurrentNumberIndex();
     numbers[numberIndex]+= nextDigit;
-}
-
-const changeNumberSign = () => {
-    numberIndex = getCurrentNumberIndex();
-    if (numbers[numberIndex] == "") { 
-        numbers[numberIndex] = "-";
-    }
-    else if (numbers[numberIndex] == "-") {
-        numbers[numberIndex] = "";
-    }
-    else {
-        numbers[numberIndex] = `${numbers[numberIndex] * -1}`; 
-    }
 }
 
 const addArithmeticOperator = (event) => {
@@ -123,6 +122,28 @@ const addArithmeticOperator = (event) => {
 
     updateText();
 }
+
+const changeNumberSign = () => {
+    numberIndex = getCurrentNumberIndex();
+    if (numbers[numberIndex] == "") { 
+        numbers[numberIndex] = "-";
+    }
+    else if (numbers[numberIndex] == "-") {
+        numbers[numberIndex] = "";
+    }
+    else {
+        numbers[numberIndex] = `${numbers[numberIndex] * -1}`; 
+    }
+}
+
+
+function addDecimalToNumber(event) { 
+    if (!numbers[getCurrentNumberIndex()].includes(".")) {
+        addToNumber(event.currentTarget.textContent) 
+    }
+}
+
+// EVALUATION METHODS //
 
 function stringNumberToRealNumber(stringNumber) {
     if (stringNumber.includes(".")) {
@@ -176,25 +197,48 @@ function evaluate(number1 = numbers[0], operatorIndex = 0, number2Index = 1) {
     return result;
 }
 
-// ADDING BUTTONS TO CALCULATOR CONTAINER
+//handles the validity of the request and
+// manipulating the textContent
+const processEvaluationRequest = () => {
+    let result;
+    justEvaluated = true;
+
+    if (numbers.length >= 2) {
+        result = evaluate();
+    }
+    else {
+        alert("ERROR: cannot evaluate without at least 2 numbers!");
+    }
+
+    if (result % 1 == 0) {
+        calculatorResult.textContent = "= " + result; 
+    }
+    else {
+        calculatorResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
+    }
+
+    lastResult = `${result}`;
+}
+
+///// INITALIZING CALCULATOR BUTTONS /////
 
 function giveButton() { 
     calculatorContainer.appendChild(document.createElement('button'));
     return calculatorContainer.lastChild;
 }
 
-let buttonList = {
+let buttonDefinitions = {
     "CE" : giveButton(),  "C" : giveButton(),  "<-" : giveButton(), "/" : giveButton(),
     "7" : giveButton(),   "8" : giveButton(),  "9" : giveButton(),  "*" : giveButton(),
     "4" : giveButton(),   "5" : giveButton(),  "6" : giveButton(),  "-" : giveButton(),
     "1" : giveButton(),   "2" : giveButton(),  "3" : giveButton(),  "+" : giveButton(),
-    "+/-" : giveButton(), "0" : giveButton(),  "\." : giveButton(),  "=" : giveButton()
+    "+/-" : giveButton(), "0" : giveButton(),  "." : giveButton(),  "=" : giveButton()
 }
 
-// GIVING BUTTONS TEXT AND EVENT LISTENERS
+const buttonListMap = new Map(Object.entries(buttonDefinitions));
 
-const buttonListMap = new Map(Object.entries(buttonList));
-
+//defines buttons with their element textContents
+// and event listeners for their respective natures
 buttonListMap.forEach((element, name) => {
     element.textContent = name; // Objects, like the element node here, are always passed by reference which makes this mutation possible in a forEach method
     switch (name) {
@@ -230,38 +274,17 @@ buttonListMap.forEach((element, name) => {
             return;
         // Evaluation operation
         case ("="):
-            element.addEventListener('click', () => {
-                let result;
-                justEvaluated = true;
-                if (numbers.length >= 2) {
-                    result = evaluate();
-                }
-                else {
-                    alert("ERROR: cannot evaluate without at least 2 numbers!");
-                }
-
-                if (result % 1 == 0) {
-                    calculatorResult.textContent = "= " + result; 
-                }
-                else {
-                    calculatorResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
-                }
-
-                lastResult = `${result}`;
-            });
+            element.addEventListener('click', processEvaluationRequest);
             return;
         // Special number mutators
         case ("+/-"): //strings can be operated on as numbers can except for when the + operator is used, so this case works as intended
             element.addEventListener('click', changeNumberSign);
             break;
         case ("."):
-            element.addEventListener('click', (event) => { 
-                if (!numbers[getCurrentNumberIndex()].includes(".")) {
-                    addToNumber(event.currentTarget.textContent) 
-                }
-            });
+            element.addEventListener('click', (event) => { addDecimalToNumber(event) });
             break;
     }
+    //secondary event listeners for buttons that will reset evaluated value
     element.addEventListener('click', () => {
         updateText();
         justEvaluated = false;
