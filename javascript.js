@@ -1,11 +1,21 @@
 const calculatorContainer = document.querySelector('body').querySelector('.calculatorContainer');
 
-let buttonRows = [];
+function giveButton() { 
+    calculatorContainer.appendChild(document.createElement('button'));
+    return calculatorContainer.lastChild;
+};
 
-for (let i = 0; i < 4; i++) {
-    buttonRows.push([]);
-    for (let j = 0; j < 4; j++) {
-        buttonRows.push(document.createElement('button'));
-        calculatorContainer.appendChild(buttonRows[i][j]);
-    }
-}
+let buttonList = {
+    "CE" : giveButton(),  "C" : giveButton(),  "<-" : giveButton(), "/" : giveButton(),
+    "7" : giveButton(),   "8" : giveButton(),  "9" : giveButton(),  "*" : giveButton(),
+    "4" : giveButton(),   "5" : giveButton(),  "6" : giveButton(),  "-" : giveButton(),
+    "1" : giveButton(),   "2" : giveButton(),  "3" : giveButton(),  "+" : giveButton(),
+    "+/-" : giveButton(), "0" : giveButton(),  "\." : giveButton(),  "=" : giveButton()
+};
+
+const buttonListMap = new Map(Object.entries(buttonList));
+
+buttonListMap.forEach((element, name) => {
+    element.textContent = name;
+});
+
