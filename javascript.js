@@ -7,6 +7,7 @@ const decimalLimit = 3;
 let number1 = "";
 let number2 = "";
 let operator = "";
+let previousResult = "0";
 let decimal = false;
 let operated = false;
 
@@ -34,6 +35,36 @@ function giveCurrentNumber() {
     }
     else {
         return 2;
+    }
+}
+
+const clearEntry = () => {
+    if (giveCurrentNumber() == 1) {
+        number1 = "";
+    }
+    else {
+        if (number2 != "") {
+            number2 = "";
+        }
+        else {
+            operator = "";
+        }
+    }
+}
+
+const backspaceOnce = () => {
+    if (giveCurrentNumber() == 1) {
+        if (number1 != "") {
+            number1 = number1.substring(0, number1.length - 1);
+        }
+    }
+    else {
+        if (number2 != "") {
+            number2 = number2.substring(0, number2.length - 1);
+        }
+        else {
+            operator = "";
+        }
     }
 }
 
@@ -71,6 +102,16 @@ const changeNumberSign = () => {
     }
 }
 
+const addArithmeticOperator = (event) => {
+    if (operated) {
+        resetCalculatorVariables();
+        number1 = previousResult;
+    }
+    operator = event.currentTarget.textContent 
+    updateText();
+    operated = false;
+}
+
 function add(first, second) {
     return first + second;
 }
@@ -84,10 +125,12 @@ function divide(first, second) {
     return first / second;
 }
 
-function operate() {
+const operate = () => {
     operated = true;
     let realNumber1;
     let realNumber2;
+    let result;
+
     if (number1.includes(".")) {
         realNumber1 = parseFloat(number1);
     }
@@ -95,25 +138,37 @@ function operate() {
         realNumber1 = parseInt(number1);
     }
     if (number2.includes(".")) {
-        realNumber2 = parseFloat(number1);
+        realNumber2 = parseFloat(number2);
     }
     else {
         realNumber2 = parseInt(number2);
     }
+
     if (operator == "+") {
-        return add(realNumber1, realNumber2);
+        result = add(realNumber1, realNumber2);
     }
     else if (operator == "-") {
-        return subtract(realNumber1, realNumber2);
+        result = subtract(realNumber1, realNumber2);
     }
     else if (operator == "*") {
-        return multiply(realNumber1, realNumber2);
+        result = multiply(realNumber1, realNumber2);
     }
     else if (operator == "/") {
-        return divide(realNumber1, realNumber2);
+        result = divide(realNumber1, realNumber2);
     }
-    alert("ERROR: operate() failed!");
-    return NaN;
+    else {
+        alert("ERROR: evaluation failed!");
+        result = NaN;
+    }
+
+    if (result % 1 == 0) {
+        calculatorResult.textContent = "= " + result; 
+    }
+    else {
+        calculatorResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
+    }
+
+    previousResult = `${result}`;
 }
 
 // ADDING BUTTONS TO CALCULATOR CONTAINER
@@ -140,9 +195,13 @@ buttonListMap.forEach((element, name) => {
     switch (name) {
         // Backtracking
         case ("CE"):
+            element.addEventListener('click', clearEntry);
+            break;
         case ("C"):
-        case ("<-"):
             element.addEventListener('click', resetCalculatorVariables);
+            break;
+        case ("<-"):
+            element.addEventListener('click', backspaceOnce);
             break;
         // Number additions
         case ("1"):
@@ -157,24 +216,17 @@ buttonListMap.forEach((element, name) => {
         case ("0"):
             element.addEventListener('click', (event) => { addToNum(event.currentTarget.textContent, giveCurrentNumber()) });
             break;
-        // Evaluation operators
+        // Arithmetic operators
         case ("+"):
         case ("-"):
         case ("*"):
         case ("/"):
-            element.addEventListener('click', (event) => { operator = event.currentTarget.textContent });
-            break;
+            element.addEventListener('click', (event) => { addArithmeticOperator(event) });
+            return;
+        // Evaluation operation
         case ("="):
-            element.addEventListener('click', () => { 
-                result = operate();
-                if (result % 1 == 0) {
-                    calculatorResult.textContent = "= " + result; 
-                }
-                else {
-                    calculatorResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
-                }
-            });
-            return; //avoids reverting operated to true for this element
+            element.addEventListener('click', operate);
+            return;
         // Special number mutators
         case ("+/-"): //strings can be operated on as numbers can except for when the + operator is used, so this case works as intended
             element.addEventListener('click', changeNumberSign);
