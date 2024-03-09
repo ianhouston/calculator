@@ -39,6 +39,8 @@ button {
 }
 
 .calculatorTextContainer {
+    display: flex;
+    flex-direction: column;
     grid-column-start: 1; 
     grid-column-end: -1;
     grid-row-start: 1 ;
@@ -52,5 +54,12 @@ button {
 }
 
 .calculatorText {
-    margin: 12px;
+    margin: inherit;
+    align-self: flex-start;
+}
+
+.calculatorResult {
+    margin: inherit;
+    margin-top: 6px;
+    align-self: flex-end;
 }
