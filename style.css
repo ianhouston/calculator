@@ -1,5 +1,5 @@
 :root {
-    --button-length: 70px;
+    --grid-box-length: 70px;
 }
 
 body {
@@ -11,8 +11,8 @@ body {
 }
 
 button {
-    height: var(--button-length);
-    width: var(--button-length);
+    height: var(--grid-box-length);
+    width: var(--grid-box-length);
 }
 
 .titleBanner {
@@ -48,6 +48,7 @@ button {
     border-color: black;
     border-radius: 10px;
     margin: 10px;
+    height: var(--grid-box-length);
 }
 
 .calculatorText {
