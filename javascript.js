@@ -164,6 +164,10 @@ function multiply(number1, number2) {
     return stringNumberToRealNumber(number1) * stringNumberToRealNumber(number2);
 }
 function divide(number1, number2) {
+    if (number2 == "0") { 
+        alert("Cannot divide by zero");
+        return NaN;
+    }
     return stringNumberToRealNumber(number1) / stringNumberToRealNumber(number2);
 }
 
