@@ -192,7 +192,7 @@ function evaluate(number1 = numbers[0], operatorIndex = 0, number2Index = 1) {
             return NaN;
     }
     
-    if (numbers.length - 1> number2Index) {
+    if (numbers.length - 1 > number2Index) {
         result = evaluate(result.toString(), operatorIndex + 1, number2Index + 1);
     }
 
