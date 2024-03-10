@@ -1,12 +1,12 @@
 const calculatorContainer = document.querySelector('body').querySelector('.calculatorContainer');
-const calculatorTextContainer = calculatorContainer.querySelector('.calculatorTextContainer');
-const calculatorText = calculatorTextContainer.querySelector('.calculatorText');
-const calculatorResult = calculatorTextContainer.querySelector('.calculatorResult');
+const calculatorDisplayContainer = calculatorContainer.querySelector('.calculatorDisplayContainer');
+const calculatorDisplayEquation = calculatorDisplayContainer.querySelector('.calculatorDisplayEquation');
+const calculatorDisplayResult = calculatorDisplayContainer.querySelector('.calculatorDisplayResult');
 
 const decimalLimit = 3;
 let numbers = [];
 let operators = [];
-let lastResult = "0";
+let lastResult;
 let justEvaluated = false;
 
 ///// ADDING METHODS FOR BUTTON EVENTS /////
@@ -18,21 +18,21 @@ let justEvaluated = false;
 // because this method implies that there is a new button press that
 // will generate new data for a new evaluation.
 const updateText = () => {
-    calculatorText.textContent = "";
+    calculatorDisplayEquation.textContent = "";
     numbers.forEach((number, numberIndex) => {
-        calculatorText.textContent+= number;
+        calculatorDisplayEquation.textContent+= number;
         if (operators.length - 1 >= numberIndex) {
-            calculatorText.textContent+= ` ${operators[numberIndex]} `;
+            calculatorDisplayEquation.textContent+= ` ${operators[numberIndex]} `;
         }
     });
     
     if (justEvaluated) {
-        calculatorResult.textContent = "";
+        calculatorDisplayResult.textContent = "";
         justEvaluated = false;
     }
 }
 
-const resetTextVariables = () => {
+const resetDisplayVariables = () => {
     numbers = [];
     operators = [];
     updateText();
@@ -43,12 +43,11 @@ const resetTextVariables = () => {
 
 const clearEntry = () => {
     if (justEvaluated) {
-        resetTextVariables();
+        resetDisplayVariables();
         return;
     }
 
-    let lastNumbersIndex = numbers.length - 1;
-
+    const lastNumbersIndex = numbers.length - 1;
     if (numbers.length == operators.length) {
         operators.pop();
     }
@@ -64,12 +63,11 @@ const clearEntry = () => {
 
 const backspaceOnce = () => {
     if (justEvaluated) {
-        resetTextVariables();
+        resetDisplayVariables();
         return;
     }
 
-    let lastNumbersIndex = numbers.length - 1;
-
+    const lastNumbersIndex = numbers.length - 1;
     if (numbers.length == operators.length) {
         operators.pop();
     }
@@ -88,48 +86,49 @@ const backspaceOnce = () => {
 //returns the index of the current number
 // and can generate a new index if needed
 // and given permission with addNumberAllowed
-function getCurrentNumberIndex(addNumberAllowed = true) {
+function getCurrentNumberIndex() {
     if (justEvaluated) {
-        resetTextVariables();
-    }
-
-    if (operators.length == numbers.length) {
-        if (addNumberAllowed) {
-            numbers.push("");
-        }
-        return numbers.length - 1;
+        resetDisplayVariables();
+        numbers.push("");
     }
     else {
-        return numbers.length - 1;
+        if (operators.length == numbers.length) {
+            numbers.push("");
+            return numbers.length - 1;
+        }
+        else {
+            return numbers.length - 1;
+        }
     }
 }
 
 //adds another digit to the end of
 // the string holding the full number
 function addToNumber(nextDigit) {
-    numberIndex = getCurrentNumberIndex();
-    numbers[numberIndex]+= nextDigit;
+    numbers[getCurrentNumberIndex()]+= nextDigit;
     updateText();
 }
 
 const addArithmeticOperator = (newOperator) => {
     if (justEvaluated) {
-        resetTextVariables();
+        resetDisplayVariables();
         numbers.push(lastResult);
+        operators.push(newOperator);
         justEvaluated = false;
     }
-
-    if (operators.length < numbers.length) {
-        operators.push(newOperator);
-    }
     else {
-        operators[operators.length - 1] = newOperator; 
+        if (operators.length < numbers.length) {
+            operators.push(newOperator);
+        }
+        else {
+            operators[operators.length - 1] = newOperator; 
+        }
     }
     updateText();
 }
 
 const changeNumberSign = () => {
-    numberIndex = getCurrentNumberIndex();
+    const numberIndex = getCurrentNumberIndex();
     if (numbers[numberIndex] == "") { 
         numbers[numberIndex] = "-";
     }
@@ -146,36 +145,27 @@ const changeNumberSign = () => {
 const addDecimalToNumber = () => { 
     if (!numbers[getCurrentNumberIndex()].includes(".")) {
         addToNumber("."); 
+        updateText();
     }
-    updateText();
 }
 
 // EVALUATION METHODS //
 
-function stringNumberToRealNumber(stringNumber) {
-    if (stringNumber.includes(".")) {
-        return parseFloat(stringNumber);
-    }
-    else {
-        return parseInt(stringNumber);
-    }
-}
-
 function add(number1, number2) {
-    return stringNumberToRealNumber(number1) + stringNumberToRealNumber(number2);
+    return parseFloat(number1) + parseFloat(number2);
 }
 function subtract(number1, number2) {
-    return stringNumberToRealNumber(number1) - stringNumberToRealNumber(number2);
+    return parseFloat(number1) - parseFloat(number2);
 }
 function multiply(number1, number2) {
-    return stringNumberToRealNumber(number1) * stringNumberToRealNumber(number2);
+    return parseFloat(number1) * parseFloat(number2);
 }
 function divide(number1, number2) {
     if (number2 == "0") { 
         alert("Cannot divide by zero");
         return NaN;
     }
-    return stringNumberToRealNumber(number1) / stringNumberToRealNumber(number2);
+    return parseFloat(number1) / parseFloat(number2);
 }
 
 //will recursively evaluate values with operators 
@@ -198,12 +188,12 @@ function evaluate(number1 = numbers[0], operatorIndex = 0, number2Index = 1) {
             result = divide(number1, numbers[number2Index]);
             break;
         default:
-            alert("ERROR: evaluation failed!");
+            alert("ERROR: evaluation could not parse operator!");
             return NaN;
     }
     
     if (numbers.length - 1> number2Index) {
-        result = evaluate(`${result}`, operatorIndex + 1, number2Index + 1);
+        result = evaluate(result.toString(), operatorIndex + 1, number2Index + 1);
     }
 
     return result;
@@ -212,25 +202,21 @@ function evaluate(number1 = numbers[0], operatorIndex = 0, number2Index = 1) {
 //handles the validity of the request and
 // manipulating the textContent
 const processEvaluationRequest = () => {
-    let result;
-
-    if (numbers.length >= 2) {
-        result = evaluate();
-    }
-    else {
+    if (numbers.length < 2) {
         alert("ERROR: cannot evaluate without at least 2 numbers!");
         return;
     }
+    let result = evaluate();
 
     if (result % 1 == 0) {
-        calculatorResult.textContent = "= " + result; 
+        calculatorDisplayResult.textContent = "= " + result; 
     }
     else {
-        calculatorResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
+        calculatorDisplayResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
     }
 
     justEvaluated = true;
-    lastResult = `${result}`;
+    lastResult = result.toString();
 }
 
 ///// DEFINING CALCULATOR BUTTONS /////
@@ -260,7 +246,7 @@ buttonListMap.forEach((element, name) => {
             element.addEventListener('click', clearEntry);
             break;
         case ("C"):
-            element.addEventListener('click', resetTextVariables);
+            element.addEventListener('click', resetDisplayVariables);
             break;
         case ("<-"):
             element.addEventListener('click', backspaceOnce);
@@ -291,7 +277,7 @@ buttonListMap.forEach((element, name) => {
             break;
         // Special number mutators
         case ("+/-"): 
-            element.addEventListener('click', () => { changeNumberSign() });
+            element.addEventListener('click', changeNumberSign);
             break;
         case ("."):
             element.addEventListener('click', addDecimalToNumber);
@@ -305,12 +291,11 @@ buttonListMap.forEach((element, name) => {
 // extends use to the keyboard to press buttons
 // except for sign changes
 document.body.addEventListener('keydown', (event) => {
-    console.log(`key pressed: ${event.key}`);
     switch (event.key) {
         // Backtracking
         case ("Delete"):
             if (event.shiftKey) {
-                resetTextVariables();
+                resetDisplayVariables();
             }
             else {
                 clearEntry();
@@ -319,7 +304,7 @@ document.body.addEventListener('keydown', (event) => {
         case ("Backspace"):
             if (event.shiftKey) {
                 if (event.ctrlKey) {
-                    resetTextVariables();
+                    resetDisplayVariables();
                 }
                 else {
                     clearEntry();
@@ -346,7 +331,7 @@ document.body.addEventListener('keydown', (event) => {
             break;
         // Digit input
         default:
-            let keyInt = parseInt(event.key);
+            const keyInt = parseInt(event.key);
             if (!isNaN(keyInt) && keyInt > -1 && keyInt < 10) {
                 addToNumber(event.key);
             }

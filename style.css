@@ -49,7 +49,7 @@ button {
     border-color: rgb(60, 60, 200);
 }
 
-.calculatorTextContainer {
+.calculatorDisplayContainer {
     background-color: lightgray;
     display: flex;
     flex-direction: column;
@@ -65,13 +65,13 @@ button {
     font-size: 20px;
 }
 
-.calculatorText {
+.calculatorDisplayEquation {
     margin: inherit;
     margin-bottom: 0;
     align-self: flex-start;
 }
 
-.calculatorResult {
+.calculatorDisplayResult {
     margin: inherit;
     margin-top: 0;
     align-self: flex-end;
