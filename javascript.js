@@ -17,9 +17,25 @@ let justEvaluated = false;
 // and resets the result to nothing if there is already an evaluation
 // because this method implies that there is a new button press that
 // will generate new data for a new evaluation.
+
+//takes a number in a string and 
+// inserts commas if it is a large number
+const commaForLargeNumberRegex = new RegExp('(?<=\\d)\\d{3}$', 'gm');
+function insertCommasInNumber(number) {
+    if (number > 999) {
+        for (let indexForComma = number.search(commaForLargeNumberRegex); 
+        indexForComma != -1 || (number.indexOf(".") != -1 && indexForComma > number.indexOf(".")); 
+        indexForComma = number.slice(0, indexForComma).search(commaForLargeNumberRegex)) {
+            number = number.slice(0, indexForComma) + "," + number.slice(indexForComma);
+        }
+    }
+    return number;
+}
+
 const updateText = () => {
     calculatorDisplayEquation.textContent = "";
     numbers.forEach((number, numberIndex) => {
+        number = insertCommasInNumber(number);
         calculatorDisplayEquation.textContent+= number;
         if (operators.length - 1 >= numberIndex) {
             calculatorDisplayEquation.textContent+= ` ${operators[numberIndex]} `;
@@ -90,6 +106,7 @@ function getCurrentNumberIndex() {
     if (justEvaluated) {
         resetDisplayVariables();
         numbers.push("");
+        return 0;
     }
     else {
         if (operators.length == numbers.length) {
@@ -105,7 +122,8 @@ function getCurrentNumberIndex() {
 //adds another digit to the end of
 // the string holding the full number
 function addToNumber(nextDigit) {
-    numbers[getCurrentNumberIndex()]+= nextDigit;
+    const numberIndex = getCurrentNumberIndex();
+    numbers[numberIndex]+= nextDigit;
     updateText();
 }
 
@@ -209,10 +227,12 @@ const processEvaluationRequest = () => {
     let result = evaluate();
 
     if (result % 1 == 0) {
-        calculatorDisplayResult.textContent = "= " + result; 
+        calculatorDisplayResult.textContent = "= " + 
+            insertCommasInNumber(result.toString()); 
     }
     else {
-        calculatorDisplayResult.textContent = "= " + parseFloat(result.toFixed(decimalLimit)); 
+        calculatorDisplayResult.textContent = "= " + 
+            insertCommasInNumber(parseFloat(result.toFixed(decimalLimit)).toString()); 
     }
 
     justEvaluated = true;
