@@ -20,11 +20,11 @@ let justEvaluated = false;
 
 //takes a number in a string and 
 // inserts commas if it is a large number
-const commaForLargeNumberRegex = new RegExp('(?<=\\d)\\d{3}$', 'gm');
+const commaForLargeNumberRegex = new RegExp('(?<=\\d)\\d{3}$|(?<=\\d)\\d{3}\\.\\d*$', 'g');
 function insertCommasInNumber(number) {
     if (number > 999) {
         for (let indexForComma = number.search(commaForLargeNumberRegex); 
-        indexForComma != -1 || (number.indexOf(".") != -1 && indexForComma > number.indexOf(".")); 
+        indexForComma != -1 || (number.includes(".") && indexForComma > number.indexOf(".")); 
         indexForComma = number.slice(0, indexForComma).search(commaForLargeNumberRegex)) {
             number = number.slice(0, indexForComma) + "," + number.slice(indexForComma);
         }
